@@ -1,4 +1,4 @@
-const db = require("../db");
+const Transaction = require("../models/transaction");
 
 const createTransaction = (req, res) => {
   const { userID, type, category, title, description, amount, date, time } =
@@ -18,13 +18,15 @@ const createTransaction = (req, res) => {
       .json({ message: "Missing required fields or invalid type" });
   }
 
-  const sql = `INSERT INTO transactions 
-    (userID, type, category, title, description, amount, date, time) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-
-  db.query(
-    sql,
-    [userID, type, category, title, description, amount, date, time],
+  Transaction.createTransaction(
+    userID,
+    type,
+    category,
+    title,
+    description,
+    amount,
+    date,
+    time,
     (err, result) => {
       if (err) {
         return res.status(500).json({ message: err.message });
@@ -37,10 +39,7 @@ const createTransaction = (req, res) => {
 const getUserTransactions = (req, res) => {
   const userID = req.params.userID;
 
-  const sql =
-    "SELECT * FROM transactions WHERE userID = ? ORDER BY date DESC, time DESC";
-
-  db.query(sql, [userID], (err, results) => {
+  Transaction.getUserTransactions(userID, (err, results) => {
     if (err) {
       return res.status(500).json({ message: err.message });
     }
