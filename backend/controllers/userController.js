@@ -3,19 +3,19 @@ const bcrypt = require("bcrypt");
 
 const createUser = async (req, res) => {
   try {
-    const { email, pwd } = req.body;
+    const { name, email, pwd } = req.body;
 
-    if (!email || !pwd) {
+    if (!name || !email || !pwd) {
       return res
         .status(400)
-        .json({ message: "Email and password are required" });
+        .json({ message: "Name, email and password are required" });
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(pwd, 10);
 
-    const sql = "INSERT INTO user (email, pwd) VALUES (?, ?)";
-    db.query(sql, [email, hashedPassword], (err, result) => {
+    const sql = "INSERT INTO users (name, email, pwd) VALUES (?, ?, ?)";
+    db.query(sql, [name, email, hashedPassword], (err, result) => {
       if (err) {
         if (err.code === "ER_DUP_ENTRY") {
           return res.status(409).json({ message: "Email already exists" });
@@ -30,7 +30,7 @@ const createUser = async (req, res) => {
 };
 
 const getUsers = (req, res) => {
-  const sql = "SELECT userID, email, created_at FROM user";
+  const sql = "SELECT userID, name, email, created_at FROM users";
   db.query(sql, (err, results) => {
     if (err) {
       return res.status(500).json({ message: err.message });
