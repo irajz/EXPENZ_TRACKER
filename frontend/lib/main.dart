@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/providers/auth_provider.dart';
 import 'package:frontend/providers/onboarding_provider.dart';
+import 'package:frontend/screens/auth_screen.dart';
 import 'package:frontend/screens/onboarding_screen.dart';
 import 'package:frontend/screens/splash_screen.dart';
 // import 'package:frontend/screens/splash_screen.dart';
@@ -11,6 +13,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => OnboardingProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
       child: const MyApp(),
     ),
@@ -32,7 +35,16 @@ class MyApp extends StatelessWidget {
         GoRoute(
           path: '/onboarding',
           builder: (context, state) => OnboardingScreen(),
-        )
+        ),
+        GoRoute(
+            path: '/auth',
+            builder: (context, state) {
+              return AuthScreen(
+                mode: state.uri.queryParameters['mode'] == 'register'
+                    ? FormMode.register
+                    : FormMode.login,
+              );
+            }),
         // Add other routes later
       ],
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/onboarding_provider.dart';
@@ -70,22 +71,22 @@ class OnboardingScreen extends StatelessWidget {
                             curve: Curves.easeInOut,
                           );
                         } else {
-                          // TODO: Navigate to next screen (login/dashboard)
+                          context.go('/auth?mode=login');
                         }
                       },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(double.infinity, 48),
+                        backgroundColor: Color(0xFF6F43FF),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
                       child: Text(
                         provider.currentPage < pages.length - 1
                             ? 'Next'
                             : 'Get Started',
                         style: TextStyle(
                           color: Colors.white,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size(double.infinity, 48),
-                        backgroundColor: Color(0xFF6F43FF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
                         ),
                       ),
                     ),
