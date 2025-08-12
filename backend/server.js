@@ -18,8 +18,8 @@ const userRoutes = require("./routes/userRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const authRoutes = require("./routes/authRoutes");
 
-app.use("/api", userRoutes);
-app.use("/api", transactionRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/transactions", transactionRoutes);
 app.use("/api/auth", authRoutes);
 
 // 404 handler
