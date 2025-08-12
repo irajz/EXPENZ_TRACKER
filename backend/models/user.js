@@ -1,13 +1,15 @@
-const db = require("../db");
+const pool = require("../config/db"); // assume pool.promise() exported
 
-const createUser = (name, email, hashedPassword, callback) => {
+async function createUser(name, email, pwd) {
   const sql = "INSERT INTO users (name, email, pwd) VALUES (?, ?, ?)";
-  db.query(sql, [name, email, hashedPassword], callback);
-};
+  const [result] = await pool.query(sql, [name, email, pwd]);
+  return result;
+}
 
-const getUsers = (callback) => {
+async function getUsers() {
   const sql = "SELECT userID, name, email, created_at FROM users";
-  db.query(sql, callback);
-};
+  const [rows] = await pool.query(sql);
+  return rows;
+}
 
 module.exports = { createUser, getUsers };
