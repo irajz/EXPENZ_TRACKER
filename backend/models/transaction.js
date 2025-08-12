@@ -1,6 +1,6 @@
-const db = require("../config/db");
+const pool = require("../config/db"); // assumes promise-enabled pool
 
-const createTransaction = (
+async function createTransaction(
   userID,
   type,
   category,
@@ -8,25 +8,30 @@ const createTransaction = (
   description,
   amount,
   date,
-  time,
-  callback
-) => {
+  time
+) {
   const sql = `INSERT INTO transactions 
     (userID, type, category, title, description, amount, date, time) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
-  db.query(
-    sql,
-    [userID, type, category, title, description, amount, date, time],
-    callback
-  );
-};
+  const [result] = await pool.query(sql, [
+    userID,
+    type,
+    category,
+    title,
+    description || null,
+    amount,
+    date,
+    time,
+  ]);
+  return result;
+}
 
-const getUserTransactions = (userID, callback) => {
+async function getUserTransactions(userID) {
   const sql =
     "SELECT * FROM transactions WHERE userID = ? ORDER BY date DESC, time DESC";
-
-  db.query(sql, [userID], callback);
-};
+  const [rows] = await pool.query(sql, [userID]);
+  return rows;
+}
 
 module.exports = { createTransaction, getUserTransactions };

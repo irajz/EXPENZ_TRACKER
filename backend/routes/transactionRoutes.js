@@ -3,10 +3,12 @@ const router = express.Router();
 
 const transactionController = require("../controllers/transactionController");
 
-// Route to create a new transaction
-router.post("/transactions", transactionController.createTransaction);
+// Mounted under /api/transactions (see server.js)
 
-// Route to get transactions by userID
-router.get("/transactions/:userID", transactionController.getUserTransactions);
+// POST /api/transactions/ - create new transaction
+router.post("/", transactionController.createTransaction);
+
+// GET /api/transactions/:userID - get transactions for a user
+router.get("/:userID", transactionController.getUserTransactions);
 
 module.exports = router;
