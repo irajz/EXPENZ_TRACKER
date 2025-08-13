@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const ms = require("ms");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const {
@@ -6,8 +7,13 @@ const {
   signRefreshToken,
   verifyRefreshToken,
 } = require("../utils/tokens");
-
 const refreshTokenModel = require("../models/refreshToken");
+
+// Read expiry times from .env in human-readable format
+const REFRESH_TOKEN_EXPIRES = process.env.REFRESH_TOKEN_EXPIRES || "7d";
+const ACCESS_TOKEN_EXPIRES = process.env.ACCESS_TOKEN_EXPIRES || "15m";
+const REFRESH_TOKEN_EXPIRES_MS = ms(REFRESH_TOKEN_EXPIRES);
+const ACCESS_TOKEN_EXPIRES_MS = ms(ACCESS_TOKEN_EXPIRES);
 
 async function register(req, res) {
   try {
@@ -15,8 +21,6 @@ async function register(req, res) {
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password required" });
     }
-
-    // Optional: Add email format and password strength validation here
 
     const [rows] = await pool.query("SELECT id FROM users WHERE email = ?", [
       email,
@@ -27,7 +31,7 @@ async function register(req, res) {
 
     const password_hash = await bcrypt.hash(password, 12);
     const [result] = await pool.query(
-      "INSERT INTO users (email, password_hash, name) VALUES (?, ?, ?)",
+      "INSERT INTO users (email, pwd, name) VALUES (?, ?, ?)",
       [email, password_hash, name || null]
     );
 
@@ -46,7 +50,7 @@ async function login(req, res) {
     }
 
     const [rows] = await pool.query(
-      "SELECT id, password_hash FROM users WHERE email = ?",
+      "SELECT id, pwd FROM users WHERE email = ?",
       [email]
     );
 
@@ -55,11 +59,17 @@ async function login(req, res) {
     }
 
     const user = rows[0];
-    const valid = await bcrypt.compare(password, user.password_hash);
+    const valid = await bcrypt.compare(password, user.pwd);
     if (!valid) return res.status(401).json({ message: "Invalid credentials" });
 
-    const accessToken = signAccessToken({ sub: user.id, email });
-    const { token: refreshToken } = signRefreshToken({ sub: user.id, email });
+    const accessToken = signAccessToken(
+      { sub: user.id, email },
+      ACCESS_TOKEN_EXPIRES
+    );
+    const { token: refreshToken } = signRefreshToken(
+      { sub: user.id, email },
+      REFRESH_TOKEN_EXPIRES
+    );
 
     const token_hash = crypto
       .createHash("sha256")
@@ -67,7 +77,6 @@ async function login(req, res) {
       .digest("hex");
     const expires_at = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_MS);
 
-    // Store refresh token in DB via model
     await refreshTokenModel.storeRefreshToken(
       user.id,
       token_hash,
@@ -98,7 +107,8 @@ async function refresh(req, res) {
     let payload;
     try {
       payload = verifyRefreshToken(token);
-    } catch {
+    } catch (err) {
+      console.error("Refresh verify error:", err.message);
       return res.status(401).json({ message: "Invalid refresh token" });
     }
 
@@ -117,10 +127,10 @@ async function refresh(req, res) {
     // Rotate refresh token
     await refreshTokenModel.deleteRefreshTokenById(dbToken.id);
 
-    const { token: newRefresh } = signRefreshToken({
-      sub: payload.sub,
-      email: payload.email,
-    });
+    const { token: newRefresh } = signRefreshToken(
+      { sub: payload.sub, email: payload.email },
+      REFRESH_TOKEN_EXPIRES
+    );
 
     const new_token_hash = crypto
       .createHash("sha256")
@@ -136,10 +146,10 @@ async function refresh(req, res) {
       expires_at
     );
 
-    const newAccess = signAccessToken({
-      sub: payload.sub,
-      email: payload.email,
-    });
+    const newAccess = signAccessToken(
+      { sub: payload.sub, email: payload.email },
+      ACCESS_TOKEN_EXPIRES
+    );
 
     res.cookie("refreshToken", newRefresh, {
       httpOnly: true,
