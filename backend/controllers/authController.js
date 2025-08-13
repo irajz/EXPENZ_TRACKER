@@ -22,9 +22,10 @@ async function register(req, res) {
       return res.status(400).json({ message: "Email and password required" });
     }
 
-    const [rows] = await pool.query("SELECT id FROM users WHERE email = ?", [
-      email,
-    ]);
+    const [rows] = await pool.query(
+      "SELECT userID FROM users WHERE email = ?",
+      [email]
+    );
     if (rows.length) {
       return res.status(409).json({ message: "Email already registered" });
     }
@@ -50,7 +51,7 @@ async function login(req, res) {
     }
 
     const [rows] = await pool.query(
-      "SELECT id, pwd FROM users WHERE email = ?",
+      "SELECT userID, pwd FROM users WHERE email = ?",
       [email]
     );
 
@@ -63,11 +64,11 @@ async function login(req, res) {
     if (!valid) return res.status(401).json({ message: "Invalid credentials" });
 
     const accessToken = signAccessToken(
-      { sub: user.id, email },
+      { sub: user.userID, email },
       ACCESS_TOKEN_EXPIRES
     );
     const { token: refreshToken } = signRefreshToken(
-      { sub: user.id, email },
+      { sub: user.userID, email },
       REFRESH_TOKEN_EXPIRES
     );
 
@@ -78,7 +79,7 @@ async function login(req, res) {
     const expires_at = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_MS);
 
     await refreshTokenModel.storeRefreshToken(
-      user.id,
+      user.userID,
       token_hash,
       req.get("User-Agent") || null,
       req.ip,
