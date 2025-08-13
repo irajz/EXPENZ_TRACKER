@@ -42,6 +42,7 @@ class _AuthScreenState extends State<AuthScreen> {
         context.read<AuthProvider>().login(
               _emailController.text.trim(),
               _passwordController.text.trim(),
+              rememberMe: rememberMe,
             );
       }
     }
