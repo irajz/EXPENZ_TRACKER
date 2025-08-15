@@ -1,120 +1,59 @@
-import 'dart:convert';
+// auth_provider.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
+import '../services/auth_service.dart';
 
 class AuthProvider with ChangeNotifier {
-  final _storage = const FlutterSecureStorage();
-  final String _baseUrl = "http://localhost:5000"; // change for production
+  final AuthService _authService = AuthService();
 
-  String? _accessToken;
-  bool isLoading = false;
-  bool get isAuthenticated => _accessToken != null;
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
-  // REGISTER
-  Future<void> register(String name, String email, String password) async {
-    isLoading = true;
+  bool _isAuthenticated = false;
+  bool get isAuthenticated => _isAuthenticated;
+
+  void _setLoading(bool value) {
+    _isLoading = value;
     notifyListeners();
+  }
 
+  Future<void> initAuth() async {
+    final token = await _authService.getAccessToken();
+    _isAuthenticated = token != null;
+    notifyListeners();
+  }
+
+  Future<bool> login(String email, String password,
+      {required bool rememberMe}) async {
+    _setLoading(true);
     try {
-      final res = await http.post(
-        Uri.parse("$_baseUrl/register"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "name": name,
-          "email": email,
-          "password": password,
-        }),
-      );
-
-      if (res.statusCode == 201) {
-        // auto-login after register
-        await login(email, password);
-      } else {
-        throw Exception(jsonDecode(res.body)["message"]);
-      }
-    } catch (e) {
-      debugPrint("Register error: $e");
-      rethrow;
-    } finally {
-      isLoading = false;
+      final success = await _authService.login(email, password);
+      _isAuthenticated = success;
       notifyListeners();
+      return success;
+    } finally {
+      _setLoading(false);
     }
   }
 
-  // LOGIN
-  Future<void> login(String email, String password,
-      {bool rememberMe = false}) async {
-    isLoading = true;
-    notifyListeners();
-
+  Future<bool> register(String name, String email, String password) async {
+    _setLoading(true);
     try {
-      final res = await http.post(
-        Uri.parse("$_baseUrl/login"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email,
-          "password": password,
-        }),
-      );
-
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        _accessToken = data["accessToken"];
-
-        if (rememberMe) {
-          await _storage.write(key: "accessToken", value: _accessToken);
-        }
-
-        notifyListeners();
-      } else {
-        throw Exception(jsonDecode(res.body)["message"]);
-      }
-    } catch (e) {
-      debugPrint("Login error: $e");
-      rethrow;
-    } finally {
-      isLoading = false;
+      final success = await _authService.register(name, email, password);
+      _isAuthenticated = success;
       notifyListeners();
+      return success;
+    } finally {
+      _setLoading(false);
     }
   }
 
-  // LOAD TOKEN FROM STORAGE (auto login)
-  Future<void> loadStoredToken() async {
-    _accessToken = await _storage.read(key: "accessToken");
-    notifyListeners();
-  }
-
-  // LOGOUT
   Future<void> logout() async {
+    _setLoading(true);
     try {
-      if (_accessToken != null) {
-        await http.post(
-          Uri.parse("$_baseUrl/logout"),
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer $_accessToken",
-          },
-        );
-      }
-    } catch (e) {
-      debugPrint("Logout request failed: $e");
+      await _authService.logout();
+      _isAuthenticated = false;
     } finally {
-      _accessToken = null;
-      await _storage.delete(key: "accessToken");
-      notifyListeners();
+      _setLoading(false);
     }
-  }
-
-  // Helper for authorized requests
-  Future<http.Response> authorizedGet(String endpoint) async {
-    if (_accessToken == null) throw Exception("Not authenticated");
-    return http.get(
-      Uri.parse("$_baseUrl$endpoint"),
-      headers: {
-        "Authorization": "Bearer $_accessToken",
-        "Content-Type": "application/json",
-      },
-    );
   }
 }

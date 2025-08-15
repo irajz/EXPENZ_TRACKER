@@ -30,20 +30,47 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  // void _submit() {
+  //   if (_formKey.currentState!.validate()) {
+  //     if (widget.mode == FormMode.register) {
+  //       context.read<AuthProvider>().register(
+  //             _nameController.text.trim(),
+  //             _emailController.text.trim(),
+  //             _passwordController.text.trim(),
+  //           );
+  //     } else {
+  //       context.read<AuthProvider>().login(
+  //             _emailController.text.trim(),
+  //             _passwordController.text.trim(),
+  //             rememberMe: rememberMe,
+  //           );
+  //     }
+  //   }
+  // }
+
+  void _submit() async {
     if (_formKey.currentState!.validate()) {
+      bool success = false;
       if (widget.mode == FormMode.register) {
-        context.read<AuthProvider>().register(
+        success = await context.read<AuthProvider>().register(
               _nameController.text.trim(),
               _emailController.text.trim(),
               _passwordController.text.trim(),
             );
       } else {
-        context.read<AuthProvider>().login(
+        success = await context.read<AuthProvider>().login(
               _emailController.text.trim(),
               _passwordController.text.trim(),
               rememberMe: rememberMe,
             );
+      }
+
+      if (success && mounted) {
+        context.go('/home'); // ✅ Navigate to home
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Invalid email or password")),
+        );
       }
     }
   }

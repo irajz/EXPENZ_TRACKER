@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/providers/auth_provider.dart';
 import 'package:frontend/providers/onboarding_provider.dart';
 import 'package:frontend/screens/auth_screen.dart';
+import 'package:frontend/screens/home_screen.dart';
 import 'package:frontend/screens/onboarding_screen.dart';
 import 'package:frontend/screens/splash_screen.dart';
 // import 'package:frontend/screens/splash_screen.dart';
@@ -45,6 +46,10 @@ class MyApp extends StatelessWidget {
                     : FormMode.login,
               );
             }),
+        GoRoute(
+          path: '/home',
+          builder: (context, state) => const HomeScreen(),
+        ),
         // Add other routes later
       ],
     );

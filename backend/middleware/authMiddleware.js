@@ -11,11 +11,9 @@ function authMiddleware(req, res, next) {
 
     // 2. Ensure it starts with 'Bearer'
     if (!authHeader.startsWith("Bearer ")) {
-      return res
-        .status(401)
-        .json({
-          message: "Invalid authorization format. Use 'Bearer <token>'",
-        });
+      return res.status(401).json({
+        message: "Invalid authorization format. Use 'Bearer <token>'",
+      });
     }
 
     // 3. Extract token
