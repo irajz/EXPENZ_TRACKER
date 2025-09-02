@@ -68,6 +68,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/providers/auth_provider.dart';
 import 'package:frontend/providers/onboarding_provider.dart';
+import 'package:frontend/providers/transaction_provider.dart';
 import 'package:provider/provider.dart';
 import 'core/app_router.dart';
 
@@ -77,6 +78,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => OnboardingProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => TransactionProvider()),
       ],
       child: const MyApp(),
     ),
